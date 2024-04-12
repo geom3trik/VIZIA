@@ -290,11 +290,10 @@ impl CircleDrawer {
             Binding::new(cx, CircleDrawerData::menu_open, |cx, is_open| {
                 if is_open.get(cx) {
                     Popup::new(cx, |cx| {
-                        Button::new(cx, |cx| Label::new(cx, "Adjust diameter.."));
-                    })
-                    .on_press(|cx| {
-                        cx.emit(CircleDrawerEvent::ToggleDialog);
-                        cx.emit(CircleDrawerEvent::ToggleRightMenu);
+                        Button::new(cx, |cx| Label::new(cx, "Adjust diameter..")).on_press(|cx| {
+                            cx.emit(CircleDrawerEvent::ToggleDialog);
+                            cx.emit(CircleDrawerEvent::ToggleRightMenu);
+                        });
                     })
                     .size(Auto)
                     .left(CircleDrawerData::menu_posx)
@@ -304,36 +303,50 @@ impl CircleDrawer {
                 }
             });
 
-            Dialog::new(cx, CircleDrawerData::dialog_open, |cx| {
-                let selected =
-                    CircleDrawerData::circles_data.then(CircleData::selected).get(cx).unwrap();
+            Binding::new(cx, CircleDrawerData::dialog_open, |cx, is_open| {
+                if is_open.get(cx) {
+                    Popup::new(cx, |cx| {
+                        let selected = CircleDrawerData::circles_data
+                            .then(CircleData::selected)
+                            .get(cx)
+                            .unwrap();
 
-                VStack::new(cx, |cx| {
-                    Label::new(
-                        cx,
-                        &format!(
-                            "Adjust diameter of circle at {:?}.",
-                            CircleDrawerData::circles_data
-                                .then(CircleData::circles)
-                                .index(selected)
-                                .map(|c| (c.x, c.y))
-                        ),
-                    );
+                        VStack::new(cx, |cx| {
+                            Label::new(
+                                cx,
+                                &format!(
+                                    "Adjust diameter of circle at {:?}.",
+                                    CircleDrawerData::circles_data
+                                        .then(CircleData::circles)
+                                        .get(cx)
+                                        .get(selected)
+                                        .map(|c| (c.x, c.y))
+                                        .unwrap()
+                                ),
+                            );
 
-                    Slider::new(
-                        cx,
-                        CircleDrawerData::circles_data
-                            .then(CircleData::circles)
-                            .index(selected)
-                            .map(|c| c.r),
-                    )
-                    .range(4.0..150.0)
-                    .on_changing(|cx, value| cx.emit(CircleDrawerEvent::ChangeRadius(value)));
-                })
-                .size(Auto);
-            })
-            .class("dialog-box");
-            // .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleDialog));
+                            Slider::new(
+                                cx,
+                                CircleDrawerData::circles_data
+                                    .then(CircleData::circles)
+                                    .index(selected)
+                                    .map(|c| c.r),
+                            )
+                            .range(4.0..150.0)
+                            .on_changing(|cx, value| {
+                                cx.emit(CircleDrawerEvent::ChangeRadius(value))
+                            });
+                        })
+                        .size(Auto);
+                    })
+                    .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleDialog))
+                    .class("dialog-box")
+                    .top(Stretch(1.0))
+                    .bottom(Stretch(0.01))
+                    .left(Stretch(1.0))
+                    .right(Stretch(1.0));
+                }
+            });
 
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| Label::new(cx, "Undo"))
