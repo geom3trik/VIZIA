@@ -26,7 +26,6 @@ const STYLE: &str = r#"
         width: 460px;
         height: 100px;
         space: 1s;
-        bottom: 40px;
         background-color: rgba(255, 255, 255, 0.7);
         border: 1px black;
         border-radius: 10%;
@@ -185,8 +184,8 @@ impl Model for CircleDrawerData {
                     let (x, y) = cx.mouse().right.pos_down;
 
                     self.menu_open = true;
-                    self.menu_posx = Pixels(x);
-                    self.menu_posy = Pixels(y);
+                    self.menu_posx = Pixels(cx.physical_to_logical(x));
+                    self.menu_posy = Pixels(cx.physical_to_logical(y));
                 } else {
                     self.menu_open = false;
                 }
