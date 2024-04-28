@@ -167,13 +167,15 @@ impl Model for CircleDrawerData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.take(|event, _| match event {
             CircleDrawerEvent::AddCircle(x, y) => {
-                let circle = Circle { x, y, r: 26.0 };
+                let circle =
+                    Circle { x: cx.physical_to_logical(x), y: cx.physical_to_logical(y), r: 26.0 };
                 self.circles_data.add_circle(circle);
                 self.undo_redo.add_action(UndoRedoAction::Circle(circle));
             }
             CircleDrawerEvent::TrySelectCircle(x, y) => {
                 if !(self.dialog_open || self.menu_open) {
-                    self.circles_data.update_selected(x, y)
+                    self.circles_data
+                        .update_selected(cx.physical_to_logical(x), cx.physical_to_logical(y))
                 }
             }
             CircleDrawerEvent::ChangeRadius(r) => self.circles_data.change_radius(r),
@@ -191,8 +193,8 @@ impl Model for CircleDrawerData {
                 }
 
                 if !self.dialog_open {
-                    let x = cx.mouse().cursorx;
-                    let y = cx.mouse().cursory;
+                    let x = cx.physical_to_logical(cx.mouse().cursorx);
+                    let y = cx.physical_to_logical(cx.mouse().cursory);
 
                     self.circles_data.update_selected(x, y);
                 }
@@ -213,8 +215,8 @@ impl Model for CircleDrawerData {
                         ));
                     }
 
-                    let x = cx.mouse().cursorx;
-                    let y = cx.mouse().cursory;
+                    let x = cx.physical_to_logical(cx.mouse().cursorx);
+                    let y = cx.physical_to_logical(cx.mouse().cursory);
 
                     self.circles_data.update_selected(x, y);
                 }
@@ -265,7 +267,7 @@ impl View for CircleDrawerCanvas {
         let circle_data = CircleDrawerData::circles_data.get(cx);
         for (idx, Circle { x, y, r }) in circle_data.circles.iter().copied().enumerate() {
             let mut path = Path::new();
-            path.circle(x, y, r);
+            path.circle(cx.logical_to_physical(x), cx.logical_to_physical(y), r);
 
             if circle_data.selected.is_some_and(|i| i == idx) {
                 let paint = Paint::color(Color::gray().into());
