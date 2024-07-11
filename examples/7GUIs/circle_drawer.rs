@@ -26,7 +26,6 @@ const STYLE: &str = r#"
         width: 460px;
         height: 100px;
         space: 1s;
-        bottom: 40px;
         background-color: rgba(255, 255, 255, 0.7);
         border: 1px black;
         border-radius: 10%;
@@ -168,13 +167,15 @@ impl Model for CircleDrawerData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.take(|event, _| match event {
             CircleDrawerEvent::AddCircle(x, y) => {
-                let circle = Circle { x, y, r: 26.0 };
+                let circle =
+                    Circle { x: cx.physical_to_logical(x), y: cx.physical_to_logical(y), r: 26.0 };
                 self.circles_data.add_circle(circle);
                 self.undo_redo.add_action(UndoRedoAction::Circle(circle));
             }
             CircleDrawerEvent::TrySelectCircle(x, y) => {
                 if !(self.dialog_open || self.menu_open) {
-                    self.circles_data.update_selected(x, y)
+                    self.circles_data
+                        .update_selected(cx.physical_to_logical(x), cx.physical_to_logical(y))
                 }
             }
             CircleDrawerEvent::ChangeRadius(r) => self.circles_data.change_radius(r),
@@ -185,15 +186,15 @@ impl Model for CircleDrawerData {
                     let (x, y) = cx.mouse().right.pos_down;
 
                     self.menu_open = true;
-                    self.menu_posx = Pixels(x);
-                    self.menu_posy = Pixels(y);
+                    self.menu_posx = Pixels(cx.physical_to_logical(x));
+                    self.menu_posy = Pixels(cx.physical_to_logical(y));
                 } else {
                     self.menu_open = false;
                 }
 
                 if !self.dialog_open {
-                    let x = cx.mouse().cursorx;
-                    let y = cx.mouse().cursory;
+                    let x = cx.physical_to_logical(cx.mouse().cursorx);
+                    let y = cx.physical_to_logical(cx.mouse().cursory);
 
                     self.circles_data.update_selected(x, y);
                 }
@@ -214,8 +215,8 @@ impl Model for CircleDrawerData {
                         ));
                     }
 
-                    let x = cx.mouse().cursorx;
-                    let y = cx.mouse().cursory;
+                    let x = cx.physical_to_logical(cx.mouse().cursorx);
+                    let y = cx.physical_to_logical(cx.mouse().cursory);
 
                     self.circles_data.update_selected(x, y);
                 }
@@ -266,7 +267,7 @@ impl View for CircleDrawerCanvas {
         let circle_data = CircleDrawerData::circles_data.get(cx);
         for (idx, Circle { x, y, r }) in circle_data.circles.iter().copied().enumerate() {
             let mut path = Path::new();
-            path.circle(x, y, r);
+            path.circle(cx.logical_to_physical(x), cx.logical_to_physical(y), r);
 
             if circle_data.selected.is_some_and(|i| i == idx) {
                 let paint = Paint::color(Color::gray().into());
@@ -290,11 +291,10 @@ impl CircleDrawer {
             Binding::new(cx, CircleDrawerData::menu_open, |cx, is_open| {
                 if is_open.get(cx) {
                     Popup::new(cx, |cx| {
-                        Button::new(cx, |cx| Label::new(cx, "Adjust diameter.."));
-                    })
-                    .on_press(|cx| {
-                        cx.emit(CircleDrawerEvent::ToggleDialog);
-                        cx.emit(CircleDrawerEvent::ToggleRightMenu);
+                        Button::new(cx, |cx| Label::new(cx, "Adjust diameter..")).on_press(|cx| {
+                            cx.emit(CircleDrawerEvent::ToggleDialog);
+                            cx.emit(CircleDrawerEvent::ToggleRightMenu);
+                        });
                     })
                     .size(Auto)
                     .left(CircleDrawerData::menu_posx)
@@ -304,36 +304,50 @@ impl CircleDrawer {
                 }
             });
 
-            Dialog::new(cx, CircleDrawerData::dialog_open, |cx| {
-                let selected =
-                    CircleDrawerData::circles_data.then(CircleData::selected).get(cx).unwrap();
+            Binding::new(cx, CircleDrawerData::dialog_open, |cx, is_open| {
+                if is_open.get(cx) {
+                    Popup::new(cx, |cx| {
+                        let selected = CircleDrawerData::circles_data
+                            .then(CircleData::selected)
+                            .get(cx)
+                            .unwrap();
 
-                VStack::new(cx, |cx| {
-                    Label::new(
-                        cx,
-                        &format!(
-                            "Adjust diameter of circle at {:?}.",
-                            CircleDrawerData::circles_data
-                                .then(CircleData::circles)
-                                .index(selected)
-                                .map(|c| (c.x, c.y))
-                        ),
-                    );
+                        VStack::new(cx, |cx| {
+                            Label::new(
+                                cx,
+                                &format!(
+                                    "Adjust diameter of circle at {:?}.",
+                                    CircleDrawerData::circles_data
+                                        .then(CircleData::circles)
+                                        .get(cx)
+                                        .get(selected)
+                                        .map(|c| (c.x, c.y))
+                                        .unwrap()
+                                ),
+                            );
 
-                    Slider::new(
-                        cx,
-                        CircleDrawerData::circles_data
-                            .then(CircleData::circles)
-                            .index(selected)
-                            .map(|c| c.r),
-                    )
-                    .range(4.0..150.0)
-                    .on_changing(|cx, value| cx.emit(CircleDrawerEvent::ChangeRadius(value)));
-                })
-                .size(Auto);
-            })
-            .class("dialog-box");
-            // .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleDialog));
+                            Slider::new(
+                                cx,
+                                CircleDrawerData::circles_data
+                                    .then(CircleData::circles)
+                                    .index(selected)
+                                    .map(|c| c.r),
+                            )
+                            .range(4.0..150.0)
+                            .on_changing(|cx, value| {
+                                cx.emit(CircleDrawerEvent::ChangeRadius(value))
+                            });
+                        })
+                        .size(Auto);
+                    })
+                    .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleDialog))
+                    .class("dialog-box")
+                    .top(Stretch(1.0))
+                    .bottom(Stretch(0.01))
+                    .left(Stretch(1.0))
+                    .right(Stretch(1.0));
+                }
+            });
 
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| Label::new(cx, "Undo"))
