@@ -172,7 +172,8 @@ pub(crate) struct ApplicationRunner {
     /// events then the window will be resized.
     current_user_scale_factor: f64,
     /// The window's current logical size, before `user_scale_factor` has been applied. Needed to
-    /// resize the window when changing the scale factor.
+    /// resize the window when changing the scale factor. Can also be changed through external
+    /// events.
     current_window_size: WindowSize,
 }
 
@@ -211,26 +212,17 @@ impl ApplicationRunner {
             self.current_user_scale_factor = cx.user_scale_factor();
 
             // The user scale factor is not part of the HiDPI scaling, so baseview should treat it
-            // as part of our logical size
+            // as part of our logical size. This call with trigger a baseview window resize event,
+            // where the actual stored sizes are updated.
             window.resize(baseview::Size {
                 width: self.current_window_size.width as f64 * self.current_user_scale_factor,
                 height: self.current_window_size.height as f64 * self.current_user_scale_factor,
             });
 
-            // TODO: These calculations are now repeated in three places, should probably be moved
-            //       to a function
+            // TODO: Without this `WindowEvent::GeoChanged` isn't emitted for every element, even
+            //       though this same function is also called in the
+            //       `baseview::WindowEvent::Resized` event handler. Why?
             cx.set_scale_factor(self.window_scale_factor * self.current_user_scale_factor);
-            let new_physical_width =
-                self.current_window_size.width as f32 * cx.style().scale_factor();
-            let new_physical_height =
-                self.current_window_size.height as f32 * cx.style().scale_factor();
-
-            cx.set_window_size(new_physical_width, new_physical_height);
-
-            cx.needs_refresh();
-
-            // hmmm why are we flushing events again?
-            // self.event_manager.flush_events(cx.context());
         }
 
         let context = window.gl_context().expect("Window was created without OpenGL support");
@@ -376,33 +368,40 @@ impl ApplicationRunner {
             baseview::Event::Window(event) => match event {
                 baseview::WindowEvent::Focused => cx.needs_refresh(),
                 baseview::WindowEvent::Resized(window_info) => {
-                    // We keep track of the current size before applying the user scale factor while
-                    // baseview's logical size includes that factor so we need to compensate for it
-                    self.current_window_size = *cx.window_size();
-                    self.current_window_size.width =
-                        (window_info.logical_size().width / cx.user_scale_factor()).round() as u32;
-                    self.current_window_size.height =
-                        (window_info.logical_size().height / cx.user_scale_factor()).round() as u32;
-                    *cx.window_size() = self.current_window_size;
-
                     // Only use new DPI settings when `WindowScalePolicy::SystemScaleFactor` was
                     // used
                     if self.use_system_scaling {
                         self.window_scale_factor = window_info.scale();
                     }
+                    cx.set_scale_factor(self.window_scale_factor * self.current_user_scale_factor);
+                    cx.set_window_size(
+                        window_info.physical_size().width as f32,
+                        window_info.physical_size().height as f32,
+                    );
 
-                    let user_scale_factor = cx.user_scale_factor();
-
-                    cx.set_scale_factor(self.window_scale_factor * user_scale_factor);
-
-                    let physical_size =
-                        (window_info.physical_size().width, window_info.physical_size().height);
-
-                    cx.set_window_size(physical_size.0 as f32, physical_size.1 as f32);
-
-                    // let mut bounding_box = BoundingBox::default();
-                    // bounding_box.w = physical_size.0 as f32;
-                    // bounding_box.h = physical_size.1 as f32;
+                    // `cx.window_size()` stores the logical window size before any sort of scaling
+                    // stored, and it is set by the `cx.set_window_size()` call above. Because this
+                    // is stored using integer pixels, and the OS' physical window size also uses
+                    // integers, this process may result in a 1 pixel rounding error when changing
+                    // the user scale. As a result, changing the scale multiple times in sequence
+                    // can accumulate visible rounding errors. To combat this, we'll try to detect
+                    // this exact situation and reset the logical size back to its correct value if
+                    // it does happen.
+                    let scaled_new_logical_size = WindowSize::new(
+                        window_info.logical_size().width.round() as u32,
+                        window_info.logical_size().height.round() as u32,
+                    );
+                    let scaled_old_logical_size = WindowSize::new(
+                        (self.current_window_size.width as f64 * self.current_user_scale_factor)
+                            .round() as u32,
+                        (self.current_window_size.height as f64 * self.current_user_scale_factor)
+                            .round() as u32,
+                    );
+                    if scaled_new_logical_size == scaled_old_logical_size {
+                        *cx.window_size() = self.current_window_size;
+                    } else {
+                        self.current_window_size = *cx.window_size();
+                    }
 
                     cx.needs_refresh();
                 }

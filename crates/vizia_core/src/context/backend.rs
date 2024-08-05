@@ -147,7 +147,8 @@ impl<'a> BackendContext<'a> {
         self.0.text_config = text_config;
     }
 
-    /// Sets the scale factor used by the application.
+    /// Sets the scale factor used by the application. Includes both the user scaling and the system
+    /// DPI scaling.
     pub fn set_scale_factor(&mut self, scale: f64) {
         self.0.style.dpi_factor = scale;
     }
