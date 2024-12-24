@@ -36,7 +36,7 @@ pub mod window;
 mod storage;
 
 /// Contains types and functions used for custom drawing within views. This is a re-export of [skia-safe](https://github.com/rust-skia/rust-skia).
-pub mod vg {
+pub mod skia {
     pub use skia_safe::*;
 }
 

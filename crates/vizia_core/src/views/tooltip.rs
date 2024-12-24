@@ -1,5 +1,5 @@
 use crate::context::TreeProps;
-use crate::vg;
+use crate::skia;
 use crate::{modifiers::ModalModel, prelude::*};
 
 /// A tooltip view.
@@ -383,7 +383,7 @@ impl View for Arrow {
     }
     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let bounds = cx.bounds();
-        let mut path = vg::Path::new();
+        let mut path = skia::Path::new();
         match Tooltip::shift.get(cx) {
             Placement::Bottom | Placement::BottomStart | Placement::BottomEnd => {
                 path.move_to(bounds.bottom_left());
@@ -419,7 +419,7 @@ impl View for Arrow {
 
         let bg = cx.background_color();
 
-        let mut paint = vg::Paint::default();
+        let mut paint = skia::Paint::default();
         paint.set_color(bg);
         canvas.draw_path(&path, &paint);
     }
