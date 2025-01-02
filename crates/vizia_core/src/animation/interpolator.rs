@@ -1,8 +1,8 @@
 use morphorm::Units;
 use vizia_style::{
     Angle, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter, FontSize, Gradient, Length,
-    LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LinearGradient,
-    Opacity, PercentageOrNumber, Rect, Scale, Shadow, Transform, Translate, RGBA,
+    LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LineHeight,
+    LinearGradient, Opacity, PercentageOrNumber, Rect, Scale, Shadow, Transform, Translate, RGBA,
 };
 
 use skia_safe::Matrix;
@@ -360,5 +360,23 @@ impl Interpolator for ClipPath {
             (ClipPath::Shape(s), ClipPath::Shape(e)) => ClipPath::Shape(Rect::interpolate(s, e, t)),
             _ => end.clone(),
         }
+    }
+}
+
+impl Interpolator for LineHeight {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        let s = match start {
+            LineHeight::Normal => LengthOrPercentage::Percentage(120.0),
+            LineHeight::Number(num) => LengthOrPercentage::Percentage(num * 100.0),
+            LineHeight::Length(l) => l.clone(),
+        };
+
+        let e = match end {
+            LineHeight::Normal => LengthOrPercentage::Percentage(120.0),
+            LineHeight::Number(num) => LengthOrPercentage::Percentage(num * 100.0),
+            LineHeight::Length(l) => l.clone(),
+        };
+
+        LineHeight::Length(LengthOrPercentage::interpolate(&s, &e, t))
     }
 }

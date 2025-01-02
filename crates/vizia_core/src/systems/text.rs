@@ -2,7 +2,7 @@ use skia_safe::{
     font_arguments::VariationPosition,
     textlayout::{
         FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, RectHeightStyle,
-        RectWidthStyle, TextStyle,
+        RectWidthStyle, StrutStyle, TextStyle,
     },
     BlendMode, FontArguments, FontStyle, Paint,
 };
@@ -192,6 +192,56 @@ pub fn build_paragraph(
         }
         .into(),
     );
+
+    // Line Height
+    if let Some(line_height) = style.line_height.get(entity) {
+        let font_size = style.font_size.get(entity).map_or(16.0, |f| f.0);
+
+        let lh = match line_height {
+            LineHeight::Normal => 1.2,
+            LineHeight::Number(num) => *num,
+            LineHeight::Length(l) => l.to_pixels(font_size, 1.0) / font_size,
+        };
+
+        if lh != 1.2 {
+            let mut strut_style = StrutStyle::new();
+            strut_style.set_strut_enabled(true);
+            strut_style.set_force_strut_height(true);
+            strut_style.set_height(lh);
+            strut_style.set_height_override(true);
+
+            // Font Families
+            strut_style.set_font_families(
+                style
+                    .font_family
+                    .get(entity)
+                    .map(Vec::as_slice)
+                    .unwrap_or(&[FamilyOwned::Generic(GenericFontFamily::SansSerif)]),
+            );
+
+            // Font Size
+            let font_size = style.font_size.get(entity).map_or(16.0, |f| f.0);
+            strut_style.set_font_size(font_size * style.scale_factor());
+
+            // Font Style
+            match (
+                style.font_weight.get(entity),
+                style.font_width.get(entity),
+                style.font_slant.get(entity),
+            ) {
+                (None, None, None) => {}
+                (weight, width, slant) => {
+                    strut_style.set_font_style(FontStyle::new(
+                        weight.copied().unwrap_or_default().into(),
+                        width.copied().unwrap_or_default().into(),
+                        slant.copied().unwrap_or_default().into(),
+                    ));
+                }
+            }
+
+            paragraph_style.set_strut_style(strut_style);
+        }
+    }
 
     let mut paragraph_builder = ParagraphBuilder::new(&paragraph_style, font_collection);
 

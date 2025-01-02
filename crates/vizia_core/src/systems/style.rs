@@ -647,13 +647,16 @@ fn link_style_data(
     if style.letter_spacing.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;
-        should_relayout = true;
     }
 
     if style.word_spacing.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;
-        should_relayout = true;
+    }
+
+    if style.line_height.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
     }
 
     // Outer Shadow

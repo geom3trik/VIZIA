@@ -178,6 +178,13 @@ pub trait TextModifiers: internal::Modifiable {
         Length,
         SystemFlags::REFLOW
     );
+
+    modifier!(
+        /// Sets the line-height.
+        line_height,
+        LineHeight,
+        SystemFlags::REFLOW
+    );
 }
 
 impl<V> TextModifiers for Handle<'_, V> {}

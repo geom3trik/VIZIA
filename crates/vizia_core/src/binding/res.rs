@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use crate::prelude::*;
 
 #[macro_export]
@@ -135,6 +137,8 @@ impl_res_clone!(FamilyOwned);
 impl_res_simple!(TextDecorationLine);
 impl_res_clone!(TextStroke);
 impl_res_clone!(TextStrokeStyle);
+impl_res_clone!(LineHeight);
+impl_res_clone!(Range<f32>);
 
 impl<'i> ResGet<FontFamily<'i>> for FontFamily<'i> {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {

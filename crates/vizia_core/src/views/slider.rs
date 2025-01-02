@@ -475,10 +475,11 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     ///         debug!("Slider on_changing: {}", value);
     ///     });
     /// ```
-    pub fn range(self, range: Range<f32>) -> Self {
-        self.cx.emit_to(self.entity, SliderEventInternal::SetRange(range));
-
-        self
+    pub fn range<U: Into<Range<f32>>>(self, range: impl Res<U>) -> Self {
+        self.bind(range, |handle, val| {
+            let range = val.get(&handle).into();
+            handle.modify(|slider: &mut Slider<L>| slider.internal.range = range);
+        })
     }
 
     pub fn step(self, step: f32) -> Self {
