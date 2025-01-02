@@ -644,6 +644,18 @@ fn link_style_data(
         should_reflow = true;
     }
 
+    if style.letter_spacing.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+        should_relayout = true;
+    }
+
+    if style.word_spacing.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+        should_relayout = true;
+    }
+
     // Outer Shadow
     if style.shadow.link(entity, matched_rules) {
         should_redraw = true;

@@ -233,6 +233,7 @@ fn add_block(
             );
 
             let mut paint = Paint::default();
+
             // Font Color
             if let Some(font_color) = style.font_color.get(entity) {
                 paint.set_color(*font_color);
@@ -250,6 +251,7 @@ fn add_block(
 
             text_style.set_foreground_paint(&paint);
 
+            // Background Color
             if let Some(background_color) = style.background_color.get(entity) {
                 if style.text_span.get(entity).is_some() {
                     let mut paint = Paint::default();
@@ -286,6 +288,17 @@ fn add_block(
                 text_style.set_font_arguments(&FontArguments::new().set_variation_design_position(
                     VariationPosition { coordinates: &coordinates },
                 ));
+            }
+
+            // Letter Spacing
+            if let Some(letter_spacing) = style.letter_spacing.get(entity) {
+                text_style
+                    .set_letter_spacing(letter_spacing.to_px().unwrap() * style.scale_factor());
+            }
+
+            // Word Spacing
+            if let Some(word_spacing) = style.word_spacing.get(entity) {
+                text_style.set_word_spacing(word_spacing.to_px().unwrap() * style.scale_factor());
             }
 
             paragraph_builder.push_style(&text_style);

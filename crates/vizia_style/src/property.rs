@@ -3,9 +3,9 @@ use crate::{
     BorderWidth, ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError,
     CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
     FontWidth, LayoutType, Length, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow,
-    Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
-    TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
-    Transition, Translate, Units, UnparsedProperty, Visibility,
+    Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, Spacing, TextAlign,
+    TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
+    TextStrokeStyle, Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -172,6 +172,8 @@ define_property! {
         "strikethrough-style": StrikethroughStyle(TextDecorationStyle),
         "strikethrough-thickness": StrikethroughThickness(LengthOrPercentage),
         "strikethrough-color": StrikethroughColor(Color),
+        "letter-spacing": LetterSpacing(Spacing),
+        "word-spacing": WordSpacing(Spacing),
 
         // Shadow
         "shadow": Shadow(Vec<Shadow>),

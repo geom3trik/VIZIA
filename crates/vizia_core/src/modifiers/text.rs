@@ -148,6 +148,13 @@ pub trait TextModifiers: internal::Modifiable {
     );
 
     modifier!(
+        /// Sets the letter spacing.
+        letter_spacing,
+        Length,
+        SystemFlags::REFLOW
+    );
+
+    modifier!(
         /// Sets the paint style of the text stroke.
         /// You can either draw text with a stroke, or just the stroke outline.
         ///
@@ -162,6 +169,13 @@ pub trait TextModifiers: internal::Modifiable {
         /// on achieving this.
         text_stroke_style,
         TextStrokeStyle,
+        SystemFlags::REFLOW
+    );
+
+    modifier!(
+        /// Sets the word spacing.
+        word_spacing,
+        Length,
         SystemFlags::REFLOW
     );
 }

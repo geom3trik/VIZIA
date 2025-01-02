@@ -308,6 +308,8 @@ pub struct Style {
     pub(crate) font_variation_settings: StyleSet<Vec<FontVariation>>,
     pub(crate) caret_color: AnimatableSet<Color>,
     pub(crate) selection_color: AnimatableSet<Color>,
+    pub(crate) letter_spacing: AnimatableSet<Length>,
+    pub(crate) word_spacing: AnimatableSet<Length>,
 
     pub(crate) fill: AnimatableSet<Color>,
 
@@ -684,6 +686,14 @@ impl Style {
                     insert_keyframe(&mut self.fill, animation_id, time, *value);
                 }
 
+                Property::LetterSpacing(value) => {
+                    insert_keyframe(&mut self.letter_spacing, animation_id, time, value.0.clone());
+                }
+
+                Property::WordSpacing(value) => {
+                    insert_keyframe(&mut self.word_spacing, animation_id, time, value.0.clone());
+                }
+
                 _ => {}
             }
         }
@@ -793,6 +803,9 @@ impl Style {
         self.underline_color.play_animation(entity, animation, start_time, duration, delay);
 
         self.fill.play_animation(entity, animation, start_time, duration, delay);
+
+        self.letter_spacing.play_animation(entity, animation, start_time, duration, delay);
+        self.word_spacing.play_animation(entity, animation, start_time, duration, delay);
     }
 
     pub(crate) fn is_animating(&self, entity: Entity, animation: Animation) -> bool {
@@ -847,6 +860,8 @@ impl Style {
             | self.max_bottom.has_active_animation(entity, animation)
             | self.underline_color.has_active_animation(entity, animation)
             | self.fill.has_active_animation(entity, animation)
+            | self.letter_spacing.has_active_animation(entity, animation)
+            | self.word_spacing.has_active_animation(entity, animation)
     }
 
     pub(crate) fn parse_theme(&mut self, stylesheet: &str) {
@@ -1202,6 +1217,16 @@ impl Style {
                 self.fill.insert_transition(rule_id, animation);
             }
 
+            "letter-spacing" => {
+                self.letter_spacing.insert_animation(animation, self.add_transition(transition));
+                self.letter_spacing.insert_transition(rule_id, animation);
+            }
+
+            "word-spacing" => {
+                self.word_spacing.insert_animation(animation, self.add_transition(transition));
+                self.word_spacing.insert_transition(rule_id, animation);
+            }
+
             _ => {}
         }
     }
@@ -1517,6 +1542,14 @@ impl Style {
                 self.font_variation_settings.insert_rule(rule_id, font_variation_settings);
             }
 
+            Property::LetterSpacing(letter_spacing) => {
+                self.letter_spacing.insert_rule(rule_id, letter_spacing.0);
+            }
+
+            Property::WordSpacing(word_spacing) => {
+                self.word_spacing.insert_rule(rule_id, word_spacing.0);
+            }
+
             // Caret Color
             Property::CaretColor(caret_color) => {
                 self.caret_color.insert_rule(rule_id, caret_color);
@@ -1804,6 +1837,8 @@ impl Style {
         self.text_decoration_line.remove(entity);
         self.text_stroke_width.remove(entity);
         self.text_stroke_style.remove(entity);
+        self.letter_spacing.remove(entity);
+        self.word_spacing.remove(entity);
 
         // Cursor
         self.cursor.remove(entity);
@@ -2001,6 +2036,8 @@ impl Style {
         self.text_decoration_line.clear_rules();
         self.text_stroke_width.clear_rules();
         self.text_stroke_style.clear_rules();
+        self.letter_spacing.clear_rules();
+        self.word_spacing.clear_rules();
 
         self.cursor.clear_rules();
 
