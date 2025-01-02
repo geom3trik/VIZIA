@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use cssparser::*;
 use morphorm::Units;
 
@@ -72,5 +74,36 @@ impl From<Length> for LineHeight {
 impl From<LengthOrPercentage> for LineHeight {
     fn from(value: LengthOrPercentage) -> Self {
         LineHeight::Length(value)
+    }
+}
+
+impl From<&str> for LineHeight {
+    fn from(s: &str) -> Self {
+        let mut input = ParserInput::new(s);
+        let mut parser = Parser::new(&mut input);
+        LineHeight::parse(&mut parser).unwrap_or_default()
+    }
+}
+
+impl std::fmt::Display for LineHeight {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LineHeight::Normal => write!(f, "normal"),
+            LineHeight::Number(num) => write!(f, "{:.2}", *num),
+            LineHeight::Length(l) => match l {
+                LengthOrPercentage::Percentage(p) => write!(f, "{:.0}%", *p),
+                LengthOrPercentage::Length(ll) => write!(f, "{:.1}px", ll.to_px().unwrap()),
+            },
+        }
+    }
+}
+
+impl FromStr for LineHeight {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut input = ParserInput::new(s);
+        let mut parser = Parser::new(&mut input);
+        Ok(LineHeight::parse(&mut parser).unwrap_or_default())
     }
 }
