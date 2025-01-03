@@ -141,6 +141,12 @@ impl From<Transform> for Vec<Transform> {
     }
 }
 
+impl Default for Transform {
+    fn default() -> Self {
+        Transform::Translate((LengthOrPercentage::px(0.0), LengthOrPercentage::px(0.0)))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

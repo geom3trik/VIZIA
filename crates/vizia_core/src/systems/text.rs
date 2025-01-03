@@ -2,7 +2,7 @@ use skia_safe::{
     font_arguments::VariationPosition,
     textlayout::{
         FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, RectHeightStyle,
-        RectWidthStyle, StrutStyle, TextStyle,
+        RectWidthStyle, StrutStyle, TextShadow, TextStyle,
     },
     BlendMode, FontArguments, FontStyle, Paint,
 };
@@ -310,6 +310,18 @@ fn add_block(
                     paint.set_anti_alias(false);
                     paint.set_blend_mode(BlendMode::SrcOver);
                     text_style.set_background_paint(&paint);
+                }
+            }
+
+            // Shadows
+            if let Some(text_shadows) = style.text_shadow.get(entity) {
+                for shadow in text_shadows {
+                    text_style.add_shadow(TextShadow::new(
+                        shadow.color.unwrap_or(Color::transparent()),
+                        (shadow.x_offset.to_px().unwrap(), shadow.y_offset.to_px().unwrap()),
+                        shadow.blur_radius.as_ref().map(|l| l.to_px().unwrap()).unwrap_or_default()
+                            as f64,
+                    ));
                 }
             }
 

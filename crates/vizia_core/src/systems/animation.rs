@@ -27,6 +27,7 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     redraw_entities.extend(cx.style.background_size.tick(time));
     // Shadows
     redraw_entities.extend(cx.style.shadow.tick(time));
+    reflow_entities.extend(cx.style.text_shadow.tick(time));
     // Transform
     redraw_entities.extend(cx.style.transform.tick(time));
     redraw_entities.extend(cx.style.transform_origin.tick(time));

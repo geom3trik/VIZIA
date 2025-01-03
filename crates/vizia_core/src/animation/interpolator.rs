@@ -2,7 +2,8 @@ use morphorm::Units;
 use vizia_style::{
     Angle, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter, FontSize, Gradient, Length,
     LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LineHeight,
-    LinearGradient, Opacity, PercentageOrNumber, Rect, Scale, Shadow, Transform, Translate, RGBA,
+    LinearGradient, Opacity, PercentageOrNumber, Rect, Scale, Shadow, TextShadow, Transform,
+    Translate, RGBA,
 };
 
 use skia_safe::Matrix;
@@ -215,13 +216,23 @@ impl Interpolator for Matrix {
     }
 }
 
-impl<T: Interpolator> Interpolator for Vec<T> {
+impl<T: Interpolator + Default + Clone> Interpolator for Vec<T> {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        start
-            .iter()
-            .zip(end.iter())
-            .map(|(start, end)| T::interpolate(start, end, t))
-            .collect::<Vec<T>>()
+        if start.len() < end.len() {
+            // Pad start vector with default values to match length of end vector
+            let mut s = start.clone();
+            s.extend((0..(end.len() - start.len())).map(|_| T::default()));
+            s.iter()
+                .zip(end.iter())
+                .map(|(start, end)| T::interpolate(start, end, t))
+                .collect::<Vec<T>>()
+        } else {
+            start
+                .iter()
+                .zip(end.iter())
+                .map(|(start, end)| T::interpolate(start, end, t))
+                .collect::<Vec<T>>()
+        }
     }
 }
 
@@ -322,6 +333,17 @@ impl Interpolator for Shadow {
             spread_radius: Option::interpolate(&start.spread_radius, &end.spread_radius, t),
             color: Option::interpolate(&start.color, &end.color, t),
             inset: end.inset,
+        }
+    }
+}
+
+impl Interpolator for TextShadow {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        TextShadow {
+            x_offset: Length::interpolate(&start.x_offset, &end.x_offset, t),
+            y_offset: Length::interpolate(&start.y_offset, &end.y_offset, t),
+            blur_radius: Option::interpolate(&start.blur_radius, &end.blur_radius, t),
+            color: Option::interpolate(&start.color, &end.color, t),
         }
     }
 }

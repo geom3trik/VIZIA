@@ -4,7 +4,7 @@ use crate::{
     CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
     FontWidth, LayoutType, LengthOrPercentage, LineClamp, LineHeight, Opacity, Outline, Overflow,
     Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, Spacing, TextAlign,
-    TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
+    TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, TextShadow, TextStroke,
     TextStrokeStyle, Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
@@ -178,6 +178,7 @@ define_property! {
 
         // Shadow
         "shadow": Shadow(Vec<Shadow>),
+        "text-shadow": TextShadow(Vec<TextShadow>),
 
         // Backdrop Filter
         "backdrop-filter": BackdropFilter(Filter),

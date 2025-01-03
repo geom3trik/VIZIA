@@ -2,13 +2,12 @@ use vizia::{icons::ICON_CHEVRON_DOWN, prelude::*};
 
 const STYLE: &str = r#"
     .one {
-        line-height: 1.0;
-        transition: line-height 2s;
+
     }
 
-    .one:hover {
-        line-height: 1.5;
-        transition: line-height 2s;
+    .one:hover { 
+        transition: text-shadow 100ms;
+        text-shadow: 5px 5px #558ABB;
     }
 
     .two {
@@ -104,7 +103,7 @@ impl Model for AppData {
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx|{
 
-        cx.add_stylesheet(STYLE);
+        let _ = cx.add_stylesheet(STYLE);
 
         AppData {
             line_height: LineHeight::Number(1.2),
