@@ -198,14 +198,15 @@ pub fn build_paragraph(
         let font_size = style.font_size.get(entity).map_or(16.0, |f| f.0);
 
         let lh = match line_height {
-            LineHeight::Normal => 1.2,
-            LineHeight::Number(num) => *num,
-            LineHeight::Length(l) => l.to_pixels(font_size, 1.0) / font_size,
+            LineHeight::Normal => None,
+            LineHeight::Number(num) => Some(*num),
+            LineHeight::Length(l) => Some(l.to_pixels(font_size, 1.0) / font_size),
         };
 
-        if lh != 1.2 {
+        if let Some(lh) = lh {
             let mut strut_style = StrutStyle::new();
             strut_style.set_strut_enabled(true);
+            strut_style.set_half_leading(true);
             strut_style.set_force_strut_height(true);
             strut_style.set_height(lh);
             strut_style.set_height_override(true);

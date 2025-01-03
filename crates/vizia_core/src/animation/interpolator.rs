@@ -365,18 +365,14 @@ impl Interpolator for ClipPath {
 
 impl Interpolator for LineHeight {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        let s = match start {
-            LineHeight::Normal => LengthOrPercentage::Percentage(120.0),
-            LineHeight::Number(num) => LengthOrPercentage::Percentage(num * 100.0),
-            LineHeight::Length(l) => l.clone(),
-        };
-
-        let e = match end {
-            LineHeight::Normal => LengthOrPercentage::Percentage(120.0),
-            LineHeight::Number(num) => LengthOrPercentage::Percentage(num * 100.0),
-            LineHeight::Length(l) => l.clone(),
-        };
-
-        LineHeight::Length(LengthOrPercentage::interpolate(&s, &e, t))
+        match (start, end) {
+            (LineHeight::Number(s), LineHeight::Number(e)) => {
+                LineHeight::Number(f32::interpolate(s, e, t))
+            }
+            (LineHeight::Length(s), LineHeight::Length(e)) => {
+                LineHeight::Length(LengthOrPercentage::interpolate(s, e, t))
+            }
+            _ => end.clone(),
+        }
     }
 }

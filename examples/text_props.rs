@@ -1,5 +1,27 @@
 use vizia::{icons::ICON_CHEVRON_DOWN, prelude::*};
 
+const STYLE: &str = r#"
+    .one {
+        line-height: 1.0;
+        transition: line-height 2s;
+    }
+
+    .one:hover {
+        line-height: 1.5;
+        transition: line-height 2s;
+    }
+
+    .two {
+        width: 200px;
+        transition: width 2s;
+    }
+
+    .two:hover {
+        width: 250px;
+        transition: width 2s;
+    }
+"#;
+
 #[derive(Lens)]
 pub struct AppData {
     line_height: LineHeight,
@@ -81,6 +103,9 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx|{
+
+        cx.add_stylesheet(STYLE);
+
         AppData {
             line_height: LineHeight::Number(1.2),
             list: vec!["Normal".to_string(), "Number".to_string(), "Pixels".to_string(), "Percentage".to_string()],
@@ -102,13 +127,14 @@ fn main() -> Result<(), ApplicationError> {
                     .border_width(Pixels(1.0))
                     .text_wrap(true)
                     .width(Pixels(200.0))
-                    .child_space(Pixels(10.0));
+                    .child_space(Pixels(10.0))
+                    .class("one");
 
                 Label::new(cx, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.")
                     .border_color(Color::black())
                     .border_width(Pixels(1.0))
                     .text_wrap(true)
-                    .width(Pixels(200.0))
+                    .class("two")
                     .child_space(Pixels(10.0))
                     .font_family(AppData::font.map(|fam| vec![FamilyOwned::Named(fam.clone())]))
                     .font_size(AppData::font_size)
@@ -132,7 +158,6 @@ fn main() -> Result<(), ApplicationError> {
                     Slider::new(cx, AppData::font_size)
                         .range(0.0..40.0)
                         .on_changing(|cx, val| cx.emit(AppEvent::SetFontSize(val)));
-                    
 
                     Textbox::new(cx, AppData::font_size.map(|ls| format!("{:.1}px", *ls))).width(Pixels(100.0))
                         .on_submit(|cx, val, _| cx.emit(AppEvent::SetFontSize(val.strip_suffix("px").unwrap().parse::<f32>().unwrap())))
@@ -148,7 +173,6 @@ fn main() -> Result<(), ApplicationError> {
                     Slider::new(cx, AppData::letter_spacing.map(|lh| lh.to_px().unwrap()))
                         .range(0.0..20.0)
                         .on_changing(|cx, val| cx.emit(AppEvent::SetLetterSpacing(val)));
-                    
 
                     Textbox::new(cx, AppData::letter_spacing.map(|ls| format!("{:.1}px", ls.to_px().unwrap()))).width(Pixels(100.0))
                         .on_submit(|cx, val, _| cx.emit(AppEvent::SetLetterSpacing(val.strip_suffix("px").unwrap().parse::<f32>().unwrap())))
@@ -164,7 +188,6 @@ fn main() -> Result<(), ApplicationError> {
                     Slider::new(cx, AppData::word_spacing.map(|lh| lh.to_px().unwrap()))
                         .range(0.0..20.0)
                         .on_changing(|cx, val| cx.emit(AppEvent::SetWordSpacing(val)));
-                    
 
                     Textbox::new(cx, AppData::word_spacing.map(|ls| format!("{:.1}px", ls.to_px().unwrap()))).width(Pixels(100.0))
                         .on_submit(|cx, val, _| cx.emit(AppEvent::SetWordSpacing(val.strip_suffix("px").unwrap().parse::<f32>().unwrap())))
@@ -234,8 +257,6 @@ fn main() -> Result<(), ApplicationError> {
                 .col_between(Pixels(8.0))
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0));
-
-                
             })
             .width(Pixels(250.0))
             .row_between(Pixels(8.0))

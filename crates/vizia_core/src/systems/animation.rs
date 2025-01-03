@@ -14,7 +14,7 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     // Properties which affect rendering
     // Opacity
     redraw_entities.extend(cx.style.opacity.tick(time));
-    // Corner Colour
+    // Border Colour
     redraw_entities.extend(cx.style.border_color.tick(time));
     // Corner Radius
     redraw_entities.extend(cx.style.corner_top_left_radius.tick(time));
@@ -25,7 +25,7 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     redraw_entities.extend(cx.style.background_color.tick(time));
     redraw_entities.extend(cx.style.background_image.tick(time));
     redraw_entities.extend(cx.style.background_size.tick(time));
-    // Box Shadow
+    // Shadows
     redraw_entities.extend(cx.style.shadow.tick(time));
     // Transform
     redraw_entities.extend(cx.style.transform.tick(time));
@@ -81,6 +81,10 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     relayout_entities.extend(cx.style.child_right.tick(time));
     relayout_entities.extend(cx.style.child_top.tick(time));
     relayout_entities.extend(cx.style.child_bottom.tick(time));
+
+    reflow_entities.extend(cx.style.letter_spacing.tick(time));
+    reflow_entities.extend(cx.style.word_spacing.tick(time));
+    reflow_entities.extend(cx.style.line_height.tick(time));
 
     if !relayout_entities.is_empty() {
         cx.style.system_flags.set(SystemFlags::RELAYOUT, true);

@@ -7,20 +7,15 @@ use crate::{CustomParseError, Parse};
 
 use super::{Length, LengthOrPercentage};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub enum LineHeight {
     /// The line height is based on the font.
+    #[default]
     Normal,
     /// A multiple of the view's font size.
     Number(f32),
     /// An explicit height.
     Length(LengthOrPercentage),
-}
-
-impl Default for LineHeight {
-    fn default() -> LineHeight {
-        LineHeight::Normal
-    }
 }
 
 impl<'i> Parse<'i> for LineHeight {
