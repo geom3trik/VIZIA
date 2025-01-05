@@ -217,10 +217,10 @@ impl Node for Entity {
             padding_left += border_width;
             padding_top += border_width;
 
-            let text_width = match (
-                store.text_wrap.get(*self).copied().unwrap_or(true),
-                store.text_overflow.get(*self).copied(),
-            ) {
+            let text_wrap = store.text_wrap.get(*self).copied().unwrap_or(true);
+            let text_overflow = store.text_overflow.get(*self).copied();
+
+            let text_width = match (text_wrap, text_overflow) {
                 (true, _) => {
                     if let Some(width) = width {
                         width - child_space_x
@@ -244,7 +244,9 @@ impl Node for Entity {
                 }
             };
 
-            paragraph.layout(text_width);
+            if text_wrap || text_overflow.is_some() {
+                paragraph.layout(text_width);
+            }
 
             let text_height = if let Some(height) = height { height } else { paragraph.height() };
 

@@ -1,26 +1,5 @@
 use vizia::{icons::ICON_CHEVRON_DOWN, prelude::*};
 
-const STYLE: &str = r#"
-    .one {
-
-    }
-
-    .one:hover { 
-        transition: text-shadow 100ms;
-        text-shadow: 5px 5px #558ABB;
-    }
-
-    .two {
-        width: 200px;
-        transition: width 2s;
-    }
-
-    .two:hover {
-        width: 250px;
-        transition: width 2s;
-    }
-"#;
-
 #[derive(Lens)]
 pub struct AppData {
     line_height: LineHeight,
@@ -103,8 +82,6 @@ impl Model for AppData {
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx|{
 
-        let _ = cx.add_stylesheet(STYLE);
-
         AppData {
             line_height: LineHeight::Number(1.2),
             list: vec!["Normal".to_string(), "Number".to_string(), "Pixels".to_string(), "Percentage".to_string()],
@@ -126,15 +103,26 @@ fn main() -> Result<(), ApplicationError> {
                     .border_width(Pixels(1.0))
                     .text_wrap(true)
                     .width(Pixels(200.0))
-                    .child_space(Pixels(10.0))
-                    .class("one");
+                    .child_space(Pixels(10.0));
 
-                Label::new(cx, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.")
+                Label::new(cx, "Here is some short text\n that wraps the line")
                     .border_color(Color::black())
                     .border_width(Pixels(1.0))
-                    .text_wrap(true)
-                    .class("two")
+                    //.text_wrap(true)
+                    .width(Auto)
                     .child_space(Pixels(10.0))
+                    .font_family(AppData::font.map(|fam| vec![FamilyOwned::Named(fam.clone())]))
+                    .font_size(AppData::font_size)
+                    .letter_spacing(AppData::letter_spacing)
+                    .word_spacing(AppData::word_spacing)
+                    .line_height(AppData::line_height);
+
+                Label::new(cx, "Here is some short text")
+                    .border_color(Color::black())
+                    .border_width(Pixels(1.0))
+                    //.text_wrap(true)
+                    .width(Auto)
+                    //.child_space(Pixels(10.0))
                     .font_family(AppData::font.map(|fam| vec![FamilyOwned::Named(fam.clone())]))
                     .font_size(AppData::font_size)
                     .letter_spacing(AppData::letter_spacing)
@@ -170,7 +158,7 @@ fn main() -> Result<(), ApplicationError> {
                 HStack::new(cx, |cx|{
 
                     Slider::new(cx, AppData::letter_spacing.map(|lh| lh.to_px().unwrap()))
-                        .range(0.0..20.0)
+                        .range(-20.0..20.0)
                         .on_changing(|cx, val| cx.emit(AppEvent::SetLetterSpacing(val)));
 
                     Textbox::new(cx, AppData::letter_spacing.map(|ls| format!("{:.1}px", ls.to_px().unwrap()))).width(Pixels(100.0))
