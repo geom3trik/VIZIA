@@ -2,10 +2,10 @@ use crate::{
     define_property, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderStyle,
     BorderWidth, ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError,
     CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
-    FontWidth, LayoutType, Length, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow,
-    Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
-    TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
-    Transition, Translate, Units, UnparsedProperty, Visibility,
+    FontWidth, LayoutType, LengthOrPercentage, LineClamp, LineHeight, Opacity, Outline, Overflow,
+    Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, Spacing, TextAlign,
+    TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, TextShadow, TextStroke,
+    TextStrokeStyle, Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -172,9 +172,13 @@ define_property! {
         "strikethrough-style": StrikethroughStyle(TextDecorationStyle),
         "strikethrough-thickness": StrikethroughThickness(LengthOrPercentage),
         "strikethrough-color": StrikethroughColor(Color),
+        "letter-spacing": LetterSpacing(Spacing),
+        "word-spacing": WordSpacing(Spacing),
+        "line-height": LineHeight(LineHeight),
 
         // Shadow
         "shadow": Shadow(Vec<Shadow>),
+        "text-shadow": TextShadow(Vec<TextShadow>),
 
         // Backdrop Filter
         "backdrop-filter": BackdropFilter(Filter),

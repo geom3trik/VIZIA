@@ -79,7 +79,7 @@ pub struct Slider<L: Lens> {
 
 impl<L> Slider<L>
 where
-    L: Lens<Target = f32>,
+    L: Lens<Target: Data + Clone + Into<f32>>,
 {
     /// Creates a new slider bound to the value targeted by the lens.
     ///
@@ -126,7 +126,7 @@ where
 
                     // Active track
                     Element::new(cx).class("active").bind(lens, move |handle, value| {
-                        let val = value.get(&handle);
+                        let val: f32 = value.get(&handle).into();
 
                         let normal_val = (val - range.start) / (range.end - range.start);
                         let min = thumb_size / size;
@@ -160,7 +160,7 @@ where
                             }
                         })
                         .bind(lens, move |handle, value| {
-                            let val = value.get(&handle);
+                            let val: f32 = value.get(&handle).into();
                             let normal_val = (val - range.start) / (range.end - range.start);
                             let px = normal_val * (1.0 - (thumb_size / size));
                             if orientation == Orientation::Horizontal {
@@ -181,9 +181,13 @@ where
             });
         })
         .role(Role::Slider)
-        .numeric_value(lens.map(|val| (*val as f64 * 100.0).round() / 100.0))
+        .numeric_value(lens.map(|val| {
+            let v: f32 = (val.clone()).into();
+            (v as f64 * 100.0).round() / 100.0
+        }))
         .text_value(lens.map(|val| {
-            let v = (*val as f64 * 100.0).round() / 100.0;
+            let v: f32 = (val.clone()).into();
+            let v = (v as f64 * 100.0).round() / 100.0;
             format!("{}", v)
         }))
         .navigable(true)
@@ -215,7 +219,7 @@ where
     }
 }
 
-impl<L: Lens<Target = f32>> View for Slider<L> {
+impl<L: Lens<Target: Data + Clone + Into<f32>>> View for Slider<L> {
     fn element(&self) -> Option<&'static str> {
         Some("slider")
     }
@@ -359,7 +363,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
                 let step = self.internal.step;
-                let mut val = self.lens.get(cx) + step;
+                let mut val = self.lens.get(cx).into() + step;
                 // val = step * (val / step).ceil();
                 val = val.clamp(min, max);
                 if let Some(callback) = &self.on_changing {
@@ -371,7 +375,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
                 let step = self.internal.step;
-                let mut val = self.lens.get(cx) - step;
+                let mut val = self.lens.get(cx).into() - step;
                 // val = step * (val / step).ceil();
                 val = val.clamp(min, max);
                 if let Some(callback) = &self.on_changing {
@@ -384,7 +388,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                     let min = self.internal.range.start;
                     let max = self.internal.range.end;
                     let step = self.internal.step;
-                    let mut val = self.lens.get(cx) + step;
+                    let mut val = self.lens.get(cx).into() + step;
                     val = step * (val / step).ceil();
                     val = val.clamp(min, max);
                     if let Some(callback) = &self.on_changing {
@@ -396,7 +400,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                     let min = self.internal.range.start;
                     let max = self.internal.range.end;
                     let step = self.internal.step;
-                    let mut val = self.lens.get(cx) - step;
+                    let mut val = self.lens.get(cx).into() - step;
                     val = step * (val / step).ceil();
                     val = val.clamp(min, max);
                     if let Some(callback) = &self.on_changing {
@@ -475,10 +479,11 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     ///         debug!("Slider on_changing: {}", value);
     ///     });
     /// ```
-    pub fn range(self, range: Range<f32>) -> Self {
-        self.cx.emit_to(self.entity, SliderEventInternal::SetRange(range));
-
-        self
+    pub fn range<U: Into<Range<f32>>>(self, range: impl Res<U>) -> Self {
+        self.bind(range, |handle, val| {
+            let range = val.get(&handle).into();
+            handle.modify(|slider: &mut Slider<L>| slider.internal.range = range);
+        })
     }
 
     pub fn step(self, step: f32) -> Self {
@@ -524,18 +529,11 @@ impl NamedSlider {
     pub fn new<L, T>(cx: &mut Context, lens: L, name: impl Res<T>) -> Handle<Self>
     where
         L: Lens<Target = f32>,
-        T: ToString,
+        T: ToStringLocalized,
     {
-        let name = name.get(cx).to_string();
+        let name = name.get(cx).to_string_local(cx);
         Self { on_changing: None }
             .build(cx, move |cx| {
-                Binding::new(cx, lens, move |cx, lens| {
-                    Textbox::new(cx, lens.map(|v| format!("{:.2}", v))).on_submit(|cx, txt, _| {
-                        if let Ok(val) = txt.parse() {
-                            cx.emit(NamedSliderEvent::Change(val));
-                        }
-                    });
-                });
                 Slider::custom(cx, lens, move |cx| {
                     Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
                         ZStack::new(cx, |cx| {

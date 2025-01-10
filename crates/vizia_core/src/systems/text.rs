@@ -2,7 +2,7 @@ use skia_safe::{
     font_arguments::VariationPosition,
     textlayout::{
         FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, RectHeightStyle,
-        RectWidthStyle, TextStyle,
+        RectWidthStyle, StrutStyle, TextShadow, TextStyle,
     },
     BlendMode, FontArguments, FontStyle, Paint,
 };
@@ -193,6 +193,57 @@ pub fn build_paragraph(
         .into(),
     );
 
+    // Line Height
+    if let Some(line_height) = style.line_height.get(entity) {
+        let font_size = style.font_size.get(entity).map_or(16.0, |f| f.0);
+
+        let lh = match line_height {
+            LineHeight::Normal => None,
+            LineHeight::Number(num) => Some(*num),
+            LineHeight::Length(l) => Some(l.to_pixels(font_size, 1.0) / font_size),
+        };
+
+        if let Some(lh) = lh {
+            let mut strut_style = StrutStyle::new();
+            strut_style.set_strut_enabled(true);
+            strut_style.set_half_leading(true);
+            strut_style.set_force_strut_height(true);
+            strut_style.set_height(lh);
+            strut_style.set_height_override(true);
+
+            // Font Families
+            strut_style.set_font_families(
+                style
+                    .font_family
+                    .get(entity)
+                    .map(Vec::as_slice)
+                    .unwrap_or(&[FamilyOwned::Generic(GenericFontFamily::SansSerif)]),
+            );
+
+            // Font Size
+            let font_size = style.font_size.get(entity).map_or(16.0, |f| f.0);
+            strut_style.set_font_size(font_size * style.scale_factor());
+
+            // Font Style
+            match (
+                style.font_weight.get(entity),
+                style.font_width.get(entity),
+                style.font_slant.get(entity),
+            ) {
+                (None, None, None) => {}
+                (weight, width, slant) => {
+                    strut_style.set_font_style(FontStyle::new(
+                        weight.copied().unwrap_or_default().into(),
+                        width.copied().unwrap_or_default().into(),
+                        slant.copied().unwrap_or_default().into(),
+                    ));
+                }
+            }
+
+            paragraph_style.set_strut_style(strut_style);
+        }
+    }
+
     let mut paragraph_builder = ParagraphBuilder::new(&paragraph_style, font_collection);
 
     add_block(style, tree, entity, &mut paragraph_builder, &mut 0);
@@ -233,6 +284,7 @@ fn add_block(
             );
 
             let mut paint = Paint::default();
+
             // Font Color
             if let Some(font_color) = style.font_color.get(entity) {
                 paint.set_color(*font_color);
@@ -250,6 +302,7 @@ fn add_block(
 
             text_style.set_foreground_paint(&paint);
 
+            // Background Color
             if let Some(background_color) = style.background_color.get(entity) {
                 if style.text_span.get(entity).is_some() {
                     let mut paint = Paint::default();
@@ -257,6 +310,18 @@ fn add_block(
                     paint.set_anti_alias(false);
                     paint.set_blend_mode(BlendMode::SrcOver);
                     text_style.set_background_paint(&paint);
+                }
+            }
+
+            // Shadows
+            if let Some(text_shadows) = style.text_shadow.get(entity) {
+                for shadow in text_shadows {
+                    text_style.add_shadow(TextShadow::new(
+                        shadow.color.unwrap_or(Color::transparent()),
+                        (shadow.x_offset.to_px().unwrap(), shadow.y_offset.to_px().unwrap()),
+                        shadow.blur_radius.as_ref().map(|l| l.to_px().unwrap()).unwrap_or_default()
+                            as f64,
+                    ));
                 }
             }
 
@@ -286,6 +351,17 @@ fn add_block(
                 text_style.set_font_arguments(&FontArguments::new().set_variation_design_position(
                     VariationPosition { coordinates: &coordinates },
                 ));
+            }
+
+            // Letter Spacing
+            if let Some(letter_spacing) = style.letter_spacing.get(entity) {
+                text_style
+                    .set_letter_spacing(letter_spacing.to_px().unwrap() * style.scale_factor());
+            }
+
+            // Word Spacing
+            if let Some(word_spacing) = style.word_spacing.get(entity) {
+                text_style.set_word_spacing(word_spacing.to_px().unwrap() * style.scale_factor());
             }
 
             paragraph_builder.push_style(&text_style);

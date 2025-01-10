@@ -347,3 +347,7 @@ path = "examples/views/svg.rs"
 [[example]]
 name = "debug"
 path = "examples/debug.rs"
+
+[[example]]
+name = "text_props"
+path = "examples/text_props.rs"

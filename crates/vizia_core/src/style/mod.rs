@@ -73,14 +73,14 @@ pub use vizia_style::{
     CssRule, CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation,
     FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient, HorizontalPosition,
     HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue, LineClamp, LineDirection,
-    LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, Scale, Shadow, TextAlign,
-    TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
-    Transition, Translate, VerticalPosition, VerticalPositionKeyword, Visibility, RGBA,
+    LineHeight, LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, Scale, Shadow,
+    TextAlign, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle,
+    Transform, Transition, Translate, VerticalPosition, VerticalPositionKeyword, Visibility, RGBA,
 };
 
 use vizia_style::{
     BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList, Selectors,
-    StyleSheet,
+    StyleSheet, TextShadow,
 };
 
 mod rule;
@@ -138,8 +138,10 @@ impl Default for SystemFlags {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub enum ImageOrGradient {
+    #[default]
+    None,
     Image(String),
     Gradient(Gradient),
 }
@@ -283,6 +285,7 @@ pub struct Style {
 
     // Shadow
     pub(crate) shadow: AnimatableSet<Vec<Shadow>>,
+    pub(crate) text_shadow: AnimatableSet<Vec<TextShadow>>,
 
     // Text
     pub text: SparseSet<String>,
@@ -308,6 +311,9 @@ pub struct Style {
     pub(crate) font_variation_settings: StyleSet<Vec<FontVariation>>,
     pub(crate) caret_color: AnimatableSet<Color>,
     pub(crate) selection_color: AnimatableSet<Color>,
+    pub(crate) letter_spacing: AnimatableSet<Length>,
+    pub(crate) word_spacing: AnimatableSet<Length>,
+    pub(crate) line_height: AnimatableSet<LineHeight>,
 
     pub(crate) fill: AnimatableSet<Color>,
 
@@ -558,6 +564,10 @@ impl Style {
                     insert_keyframe(&mut self.shadow, animation_id, time, value.clone());
                 }
 
+                Property::TextShadow(value) => {
+                    insert_keyframe(&mut self.text_shadow, animation_id, time, value.clone());
+                }
+
                 // TEXT
                 Property::FontColor(value) => {
                     insert_keyframe(&mut self.font_color, animation_id, time, *value);
@@ -684,6 +694,18 @@ impl Style {
                     insert_keyframe(&mut self.fill, animation_id, time, *value);
                 }
 
+                Property::LetterSpacing(value) => {
+                    insert_keyframe(&mut self.letter_spacing, animation_id, time, value.0.clone());
+                }
+
+                Property::WordSpacing(value) => {
+                    insert_keyframe(&mut self.word_spacing, animation_id, time, value.0.clone());
+                }
+
+                Property::LineHeight(value) => {
+                    insert_keyframe(&mut self.line_height, animation_id, time, value.clone());
+                }
+
                 _ => {}
             }
         }
@@ -755,6 +777,7 @@ impl Style {
         self.background_size.play_animation(entity, animation, start_time, duration, delay);
 
         self.shadow.play_animation(entity, animation, start_time, duration, delay);
+        self.text_shadow.play_animation(entity, animation, start_time, duration, delay);
 
         self.font_color.play_animation(entity, animation, start_time, duration, delay);
         self.font_size.play_animation(entity, animation, start_time, duration, delay);
@@ -793,6 +816,11 @@ impl Style {
         self.underline_color.play_animation(entity, animation, start_time, duration, delay);
 
         self.fill.play_animation(entity, animation, start_time, duration, delay);
+
+        self.letter_spacing.play_animation(entity, animation, start_time, duration, delay);
+        self.word_spacing.play_animation(entity, animation, start_time, duration, delay);
+
+        self.line_height.play_animation(entity, animation, start_time, duration, delay);
     }
 
     pub(crate) fn is_animating(&self, entity: Entity, animation: Animation) -> bool {
@@ -817,6 +845,7 @@ impl Style {
             | self.background_image.has_active_animation(entity, animation)
             | self.background_size.has_active_animation(entity, animation)
             | self.shadow.has_active_animation(entity, animation)
+            | self.text_shadow.has_active_animation(entity, animation)
             | self.font_color.has_active_animation(entity, animation)
             | self.font_size.has_active_animation(entity, animation)
             | self.caret_color.has_active_animation(entity, animation)
@@ -847,6 +876,9 @@ impl Style {
             | self.max_bottom.has_active_animation(entity, animation)
             | self.underline_color.has_active_animation(entity, animation)
             | self.fill.has_active_animation(entity, animation)
+            | self.letter_spacing.has_active_animation(entity, animation)
+            | self.word_spacing.has_active_animation(entity, animation)
+            | self.line_height.has_active_animation(entity, animation)
     }
 
     pub(crate) fn parse_theme(&mut self, stylesheet: &str) {
@@ -1052,6 +1084,11 @@ impl Style {
                 self.shadow.insert_transition(rule_id, animation);
             }
 
+            "text-shadow" => {
+                self.text_shadow.insert_animation(animation, self.add_transition(transition));
+                self.text_shadow.insert_transition(rule_id, animation);
+            }
+
             "color" => {
                 self.font_color.insert_animation(animation, self.add_transition(transition));
                 self.font_color.insert_transition(rule_id, animation);
@@ -1200,6 +1237,21 @@ impl Style {
             "fill" => {
                 self.fill.insert_animation(animation, self.add_transition(transition));
                 self.fill.insert_transition(rule_id, animation);
+            }
+
+            "letter-spacing" => {
+                self.letter_spacing.insert_animation(animation, self.add_transition(transition));
+                self.letter_spacing.insert_transition(rule_id, animation);
+            }
+
+            "word-spacing" => {
+                self.word_spacing.insert_animation(animation, self.add_transition(transition));
+                self.word_spacing.insert_transition(rule_id, animation);
+            }
+
+            "line-height" => {
+                self.line_height.insert_animation(animation, self.add_transition(transition));
+                self.line_height.insert_transition(rule_id, animation);
             }
 
             _ => {}
@@ -1517,6 +1569,18 @@ impl Style {
                 self.font_variation_settings.insert_rule(rule_id, font_variation_settings);
             }
 
+            Property::LetterSpacing(letter_spacing) => {
+                self.letter_spacing.insert_rule(rule_id, letter_spacing.0);
+            }
+
+            Property::WordSpacing(word_spacing) => {
+                self.word_spacing.insert_rule(rule_id, word_spacing.0);
+            }
+
+            Property::LineHeight(line_height) => {
+                self.line_height.insert_rule(rule_id, line_height);
+            }
+
             // Caret Color
             Property::CaretColor(caret_color) => {
                 self.caret_color.insert_rule(rule_id, caret_color);
@@ -1626,6 +1690,10 @@ impl Style {
             // Box Shadows
             Property::Shadow(shadows) => {
                 self.shadow.insert_rule(rule_id, shadows);
+            }
+
+            Property::TextShadow(shadows) => {
+                self.text_shadow.insert_rule(rule_id, shadows);
             }
 
             // Cursor Icon
@@ -1785,6 +1853,7 @@ impl Style {
 
         // Box Shadow
         self.shadow.remove(entity);
+        self.text_shadow.remove(entity);
 
         // Text and Font
         self.text.remove(entity);
@@ -1804,6 +1873,9 @@ impl Style {
         self.text_decoration_line.remove(entity);
         self.text_stroke_width.remove(entity);
         self.text_stroke_style.remove(entity);
+        self.letter_spacing.remove(entity);
+        self.word_spacing.remove(entity);
+        self.line_height.remove(entity);
 
         // Cursor
         self.cursor.remove(entity);
@@ -1947,6 +2019,7 @@ impl Style {
         self.background_size.clear_rules();
 
         self.shadow.clear_rules();
+        self.text_shadow.clear_rules();
 
         self.layout_type.clear_rules();
         self.position_type.clear_rules();
@@ -2001,6 +2074,9 @@ impl Style {
         self.text_decoration_line.clear_rules();
         self.text_stroke_width.clear_rules();
         self.text_stroke_style.clear_rules();
+        self.letter_spacing.clear_rules();
+        self.word_spacing.clear_rules();
+        self.line_height.clear_rules();
 
         self.cursor.clear_rules();
 

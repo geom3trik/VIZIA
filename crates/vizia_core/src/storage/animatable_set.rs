@@ -301,6 +301,10 @@ where
     /// a rule any transition associated with that rule will play for that entity.
     ///
     pub(crate) fn insert_transition(&mut self, rule: Rule, animation: Animation) {
+        if !self.shared_data.contains(rule) {
+            self.insert_rule(rule, T::default());
+        }
+
         // Check if the rule exists
         if self.shared_data.contains(rule) && self.animations.contains(animation) {
             self.shared_data.sparse[rule.index()].animation = animation;

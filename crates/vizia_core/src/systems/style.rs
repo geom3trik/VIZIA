@@ -644,8 +644,28 @@ fn link_style_data(
         should_reflow = true;
     }
 
-    // Outer Shadow
+    if style.letter_spacing.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.word_spacing.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.line_height.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    // Shadow
     if style.shadow.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.text_shadow.link(entity, matched_rules) {
+        should_reflow = true;
         should_redraw = true;
     }
 

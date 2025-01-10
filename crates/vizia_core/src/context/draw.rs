@@ -806,6 +806,7 @@ impl DrawContext<'_> {
 
             for (index, image) in images.iter().enumerate() {
                 match image {
+                    ImageOrGradient::None => return,
                     ImageOrGradient::Gradient(gradient) => match gradient {
                         Gradient::Linear(linear_gradient) => {
                             let (start, end, parent_length) = match linear_gradient.direction {
